@@ -28,7 +28,7 @@ This is the Meeting API
 """
 
 # Create a Meeting
-@app.route('/meeting', methods=['POST'])
+@app.route('/meeting/create', methods=['POST'])
 def create_meeting():
     host_email = request.json['host_email']
     password = request.json['password']
@@ -45,14 +45,14 @@ def create_meeting():
     return models.meeting_schema.jsonify(new_meeting)
 
 # Get All Meetings
-@app.route('/meeting', methods=['GET'])
+@app.route('/meeting/get', methods=['GET'])
 def get_meetings():
     all_meetings = models.Meeting.query.all()
     result = models.meetings_schema.dump(all_meetings)
     return jsonify(result.data)
 
 # Get Single Meeting
-@app.route('/meeting/<id>', methods=['GET'])
+@app.route('/meeting/get/<id>', methods=['GET'])
 def get_meeting(id):
     meeting = models.Meeting.query.get(id)
     # Check if meeting exists
@@ -66,7 +66,7 @@ This is the Recording API
 """
 
 # Create a Recording
-@app.route('/recording', methods=['POST'])
+@app.route('/recording/create', methods=['POST'])
 def create_recording():
     url = request.json['url']
     is_private = request.json['is_private']
@@ -171,35 +171,17 @@ def check_access():
 
 
 # Get All Recordings
-@app.route('/recording', methods=['GET'])
+@app.route('/recording/get', methods=['GET'])
 def get_recordings():
     all_recordings = models.Recording.query.all()
     result = models.recordings_schema.dump(all_recordings)
     return jsonify(result.data)
 
 # Get Single Recordings
-@app.route('/recording/<path:url>', methods=['GET'])
+@app.route('/recording/get/<path:url>', methods=['GET'])
 def get_recording(url):
     recording = models.Recording.query.get(url)
     return models.recording_schema.jsonify(recording)
-
-# Get viewers of a recording
-@app.route('/recording/get-shared', methods=['GET'])
-def get_viewers_recording():
-    url = request.json['url']
-    recording = models.Recording.query.get(url)
-
-    # Recording not found
-    if not recording:
-        return jsonify({"message": "Recording not found."})
-
-    result = models.viewers_schema.dump(recording.viewers)
-
-    # Recording without Viewers
-    if not result.data:
-        return jsonify({"message": "No viewers associated with this recording."})
-
-    return jsonify(result.data)
 
 
 """
@@ -207,7 +189,7 @@ This is the Viewers API
 """
 
 # Create a Viewer
-@app.route('/viewer', methods=['POST'])
+@app.route('/viewer/create', methods=['POST'])
 def create_viewer():
     EMAIL_REGEX = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
     email = request.json['email'] 
@@ -229,7 +211,7 @@ def create_viewer():
     return models.viewer_schema.jsonify(new_viewer)
 
 # Get All Viewers
-@app.route('/viewer', methods=['GET'])
+@app.route('/viewer/get', methods=['GET'])
 def get_viewers():
     all_viewers = models.Viewer.query.all()
     result = models.viewers_schema.dump(all_viewers)

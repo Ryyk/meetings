@@ -27,15 +27,15 @@ class MeetingsApiTestCase(unittest.TestCase):
 
     """Viewer helper function"""
     def create_viewer(self, email):
-        return self.app.post('/viewer', json={'email': email})
+        return self.app.post('/viewer/create', json={'email': email})
 
     """Meeting helper function"""
     def create_meeting(self, host_email, password):
-        return self.app.post('/meeting', json={'host_email': host_email, 'password': password})
+        return self.app.post('/meeting/create', json={'host_email': host_email, 'password': password})
 
     """Recording helper function"""
     def create_recording(self, url, is_private, meeting_id):
-        return self.app.post('/recording', json={'url': url, 'is_private': is_private, 'meeting_id': meeting_id})
+        return self.app.post('/recording/create', json={'url': url, 'is_private': is_private, 'meeting_id': meeting_id})
 
     def delete_recording(self, url):
         return self.app.post('/recording/delete', json={'url': url})
@@ -43,11 +43,17 @@ class MeetingsApiTestCase(unittest.TestCase):
     def share_recording(self, email, url):
         return self.app.post('/recording/share', json={'url': url, "email": email})
 
+    def has_access_recording(self, email, url, password):
+        return self.app.get('/recording/has-access', json={'email': email, "url": url, "password": password})
+
     # assert functions
     def test_empty_meeting(self):
         """Ensure meeting list is empty"""
         all_meetings = models.Meeting.query.all()
         self.assertEqual([], all_meetings)
+
+
+    # "/meeting/create" tests
 
     def test_create_new_meeting(self):
         """Ensure that the meeting is created"""
@@ -66,6 +72,32 @@ class MeetingsApiTestCase(unittest.TestCase):
         rv = self.create_meeting(host_email, password)
         json_data = rv.get_json()
         self.assertEqual("Invalid host email.", json_data['message'])
+
+    # "/viewers/create" tests
+
+    def test_create_new_viewer(self):
+        """Ensure that the viewer is created"""
+        email = "test@email.com"
+        self.create_viewer(email)
+        viewer = models.Viewer.query.get(1)
+        self.assertEqual(email, viewer.email)
+
+    def test_invalid_email_syntax(self):
+        """Ensure that the viewer email is valid"""
+        email = "test@"
+        rv = self.create_viewer(email)
+        json_data = rv.get_json()
+        self.assertEqual("Invalid email.", json_data['message'])
+
+    def test_duplicated_email(self):
+        """Ensure that the viewer email is unique"""
+        email = "test@email.com"
+        self.create_viewer(email)
+        rv = self.create_viewer(email)
+        json_data = rv.get_json()
+        self.assertEqual("Email already in use.", json_data['message'])
+
+    # "/recording/create" tests
 
     def test_create_new_recording(self):
         """Ensure that a new recording is created"""
@@ -109,6 +141,8 @@ class MeetingsApiTestCase(unittest.TestCase):
         json_data = rv.get_json()
         self.assertEqual("Invalid meeting id.", json_data['message'])
 
+    # "/recording/delete" tests
+
     def test_delete_recording(self):
         """Ensure that a new recording is created"""
         url = "https://s3.amazonaws.com/meetings/recording1/"
@@ -137,6 +171,8 @@ class MeetingsApiTestCase(unittest.TestCase):
         json_data = rv.get_json()
         self.assertEqual("URL does not exist.", json_data['message'])
 
+    # "/recording/share" tests
+
     def test_share_recording(self):
         """Ensure that the recording is shared"""
         url = "https://s3.amazonaws.com/meetings/recording1/"
@@ -152,7 +188,7 @@ class MeetingsApiTestCase(unittest.TestCase):
         viewers = models.Recording.query.get(url).viewers
         self.assertEqual(email, viewers[0].email)
 
-    def test_invalid_email_share_recording(self):
+    def test_email_without_match_share_recording(self):
         """Ensure that the email given is valid when sharing a recording"""
         url = "https://s3.amazonaws.com/meetings/recording1/"
         is_private = False
@@ -201,7 +237,7 @@ class MeetingsApiTestCase(unittest.TestCase):
         self.assertEqual(message, json_data['message'])
 
     def test_add_viewer_private_recording_share(self):
-        """Ensure thatit is not possible to add viewers to private recordings"""
+        """Ensure that it is not possible to add viewers to private recordings"""
         url = "https://s3.amazonaws.com/meetings/recording1/"
         is_private = True
         meeting_id = 1
@@ -215,6 +251,91 @@ class MeetingsApiTestCase(unittest.TestCase):
         message = "Cannot add viewers to a private Recording."
         self.assertEqual(message, json_data['message'])
 
+    # "/recording/has-access" tests
+
+    def test_email_without_match(self):
+        """Ensure the email has a viewer associated"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        password = "pass"
+        rv = self.has_access_recording("invalid@email.com", url, password)
+        json_data = rv.get_json()
+        message = "The Email invalid@email.com does not belong to a valid viewer."
+        self.assertEqual(message, json_data['message'])
+
+    def test_url_without_match(self):
+        """Ensure the URL has a recording associated"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        rv = self.has_access_recording(email, url, password)
+        json_data = rv.get_json()
+        message = "The URL " + url + " does not belong to a valid Recording."
+        self.assertEqual(message, json_data['message'])
+
+    def test_host_access_private_recording(self):
+        """Ensure the host has access to the private recording of a meeting"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = True
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        rv = self.has_access_recording(email, url, password)
+        json_data = rv.get_json()
+        message = "SUCCESS: Viewer " + email + " has access to the Recording."
+        self.assertEqual(message, json_data['message'])
+
+    def test_viewer_access_private_recording(self):
+        """Ensure the viewer does not have access to a private recording of a meeting"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = True
+        meeting_id = 1
+        email = "test@email.com"
+        email_alt = "alternative@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_viewer(email_alt)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        rv = self.has_access_recording(email_alt, url, password)
+        json_data = rv.get_json()
+        message = "FAIL: Viewer " + email_alt + " does not have access to the Recording."
+        self.assertEqual(message, json_data['message'])
+
+    def test_viewer_access_public_recording(self):
+        """Ensure the viewer knows the password and shares the public recording"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        self.share_recording(email, url)
+        rv = self.has_access_recording(email, url, password)
+        json_data = rv.get_json()
+        message = "SUCCESS: Viewer " + email + " has access to the Recording."
+        self.assertEqual(message, json_data['message'])
+
+    def test_wrong_password_public_recording(self):
+        """Ensure the password is correct for public recording"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        self.share_recording(email, url)
+        rv = self.has_access_recording(email, url, "wrongPass")
+        json_data = rv.get_json()
+        message = "FAIL: Viewer " + email + " does not have access to the Recording."
+        self.assertEqual(message, json_data['message'])
 
 
 if __name__ == '__main__':

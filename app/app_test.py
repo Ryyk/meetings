@@ -38,7 +38,10 @@ class MeetingsApiTestCase(unittest.TestCase):
         return self.app.post('/recording', json={'url': url, 'is_private': is_private, 'meeting_id': meeting_id})
 
     def delete_recording(self, url):
-        return self.app.get('/recording/delete/' + url)
+        return self.app.post('/recording/delete', json={'url': url})
+
+    def share_recording(self, email, url):
+        return self.app.post('/recording/share', json={'url': url, "email": email})
 
     # assert functions
     def test_empty_meeting(self):
@@ -79,20 +82,6 @@ class MeetingsApiTestCase(unittest.TestCase):
         self.assertEqual(is_private, recording.is_private)
         self.assertEqual(meeting_id, recording.meeting_id)
 
-    def test_delete_recording(self):
-        """Ensure that a new recording is created"""
-        url = "https://s3.amazonaws.com/meetings/recording1/"
-        is_private = False
-        meeting_id = 1
-        email = "test@email.com"
-        password = "pass"
-        self.create_viewer(email)
-        self.create_meeting(email, password)
-        self.create_recording(url, is_private, meeting_id)
-        self.delete_recording(url)
-        recordings = models.Recording.query.all()
-        self.assertEqual([], recordings)
-
     def test_url_already_exists(self):
         """Ensure the url from a recording is unique"""
         url = "https://s3.amazonaws.com/meetings/recording1/"
@@ -119,6 +108,113 @@ class MeetingsApiTestCase(unittest.TestCase):
         rv = self.create_recording(url, is_private, meeting_id)
         json_data = rv.get_json()
         self.assertEqual("Invalid meeting id.", json_data['message'])
+
+    def test_delete_recording(self):
+        """Ensure that a new recording is created"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        self.delete_recording(url)
+        recordings = models.Recording.query.all()
+        self.assertEqual([], recordings)
+
+    def test_invalid_url_delete_recording(self):
+        """Ensure that the URL given is valid"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        rv = self.delete_recording("https://invalid.url")
+        json_data = rv.get_json()
+        self.assertEqual("URL does not exist.", json_data['message'])
+
+    def test_share_recording(self):
+        """Ensure that the recording is shared"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        self.share_recording(email, url)
+
+        viewers = models.Recording.query.get(url).viewers
+        self.assertEqual(email, viewers[0].email)
+
+    def test_invalid_email_share_recording(self):
+        """Ensure that the email given is valid when sharing a recording"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        invalid_email = "invalid@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        rv = self.share_recording(invalid_email, url)
+        json_data = rv.get_json()
+        message = "The Email " + invalid_email + " does not belong to a valid viewer."
+        self.assertEqual(message, json_data['message'])
+
+    def test_invalid_url_share_recording(self):
+        """Ensure that the url given is valid when sharing a recording"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        invalid_url = "https://s3.amazonaws.com/meetings/invalid/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        rv = self.share_recording(email, invalid_url)
+        json_data = rv.get_json()
+        message = "The URL " + invalid_url + " does not belong to a valid Recording."
+        self.assertEqual(message, json_data['message'])
+
+    def test_duplicated_viewer_share_recording(self):
+        """Ensure that there are no duplicated viewers when sharing a recording"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        self.share_recording(email, url)
+        rv = self.share_recording(email, url)
+        json_data = rv.get_json()
+        message = "Cannot share meeting:" + url + " with the viewer " + email + " twice."
+        self.assertEqual(message, json_data['message'])
+
+    def test_add_viewer_private_recording_share(self):
+        """Ensure thatit is not possible to add viewers to private recordings"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = True
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        rv = self.share_recording(email, url)
+        json_data = rv.get_json()
+        message = "Cannot add viewers to a private Recording."
+        self.assertEqual(message, json_data['message'])
+
 
 
 if __name__ == '__main__':

@@ -87,8 +87,9 @@ def create_recording():
     return models.recording_schema.jsonify(new_recording)
 
 # Delete Recording
-@app.route('/recording/delete/<path:url>', methods=['GET'])
-def delete_recording(url):
+@app.route('/recording/delete', methods=['POST'])
+def delete_recording():
+    url = request.json['url'] 
     # Check if URL is valid 
     recording = db.session.query(models.Recording).get(url)
     if not recording:
@@ -99,9 +100,52 @@ def delete_recording(url):
     return models.recording_schema.jsonify(recording)
 
 # Share Recording
-@app.route('/recording/share/<path:url>', methods=['PUT'])
-def share_recording(url):
+@app.route('/recording/share', methods=['POST'])
+def share_recording():
+    email = request.json['email'] 
+    url = request.json['url'] 
+    recording = models.Recording.query.get(url)
+    viewer = models.Viewer.query.filter_by(email=email).first()
+
+    if not viewer:
+        return jsonify({"message": "The Email " + email + " does not belong to a valid viewer."})
+
+    if not recording:
+        return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
+
+    if viewer in recording.viewers:
+        return jsonify({"message": "Cannot share meeting:" + url + " with the viewer " + email + " twice."})
+
+    if recording.is_private:
+        return jsonify({"message": "Cannot add viewers to a private Recording."})
+
+    recording.viewers.append(viewer)
+    db.session.commit()
+
+    return jsonify({"message": "Viewer " + email + " added to recording " + url + "!"})
+
+# Verify if a Viewer has access to a specific Recording
+@app.route('/recording/has-access', methods=['GET'])
+def verify_viewer_access():
+    email = request.json['email']
+    url = request.json['url']
+    password = request.json['password']
+
+    recording = models.Recording.query.get(url)
+    viewer = models.Viewer.query.filter_by(email=email).first()
+
+    if not viewer:
+        return jsonify({"message": "The Email " + email + " does not belong to a valid viewer."})
+
+    if not recording:
+        return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
+
+    print(recording)
+
+    #has_access = models.Meeting.query.filter(and_ (host_email=email, password=password))
+
     return None
+
 
 # Get All Recordings
 @app.route('/recording', methods=['GET'])
@@ -116,31 +160,10 @@ def get_recording(url):
     recording = models.Recording.query.get(url)
     return models.recording_schema.jsonify(recording)
 
-
-# Add Viewer to Recording
-@app.route('/recording/add-viewer', methods=['POST'])
-def add_viewer_to_recording():
-    email = request.json['email']
-    url = request.json['url']
-    recording = db.session.query(models.Recording).get(url)
-    viewer = db.session.query(models.Viewer).filter_by(email=email).first()
-
-    if not recording or not viewer:
-        return jsonify({"message": "Email or URL do not belong to a valid viewer or recording."})
-
-    if recording.is_private:
-        return jsonify({"message": "Cannot add a Viewer to a private Recording."})
-
-    recording.viewers.append(viewer)
-    db.session.add(recording)
-    db.session.commit()
-
-    result = models.viewers_schema.dump(recording.viewers)
-    return jsonify(result.data)
-
-# Get Viewers of a Recording
-@app.route('/recording/get-viewers/<path:url>', methods=['GET'])
-def get_viewers_recording(url):
+# Get viewers of a recording
+@app.route('/recording/get-shared', methods=['GET'])
+def get_viewers_recording():
+    url = request.json['url'] 
     recording = models.Recording.query.get(url)
 
     # Recording not found
@@ -155,17 +178,7 @@ def get_viewers_recording(url):
 
     return jsonify(result.data)
 
-# Verify if a Viewer has access to a specific Recording
-@app.route('/recording/has-access', methods=['GET'])
-def verify_viewer_access():
-    email = request.json['email']
-    url = request.json['url']
-    password = request.json['password']
 
-    recording = db.session.query(models.Recording).get(url)
-    viewer = db.session.query(models.Viewer).filter_by(email=email).first()
-
-    return None
 
 
 """

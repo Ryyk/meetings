@@ -5,7 +5,7 @@ class Meeting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     host_email = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    recordings = db.relationship('Recording', backref='meeting', lazy=True, uselist=False)
+    recordings = db.relationship('Recording', backref='meeting', lazy=True)
 
     def __init__(self, host_email, password):
         self.host_email = host_email

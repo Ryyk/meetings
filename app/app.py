@@ -30,10 +30,15 @@ This is the Meeting API
 # Create a Meeting
 @app.route('/meeting', methods=['POST'])
 def create_meeting():
-    host_email = request.json['host_email'] #verify if the host email is a valid "host" if not exception
+    host_email = request.json['host_email']
     password = request.json['password']
-    new_meeting = models.Meeting(host_email, password)
 
+    # Verify if the host email is from a valid host
+    viewer = db.session.query(models.Viewer).filter_by(email=host_email).first()
+    if not viewer:
+        return jsonify({"message": "Invalid host email."})
+
+    new_meeting = models.Meeting(host_email, password)
     db.session.add(new_meeting)
     db.session.commit()
 
@@ -50,6 +55,11 @@ def get_meetings():
 @app.route('/meeting/<id>', methods=['GET'])
 def get_meeting(id):
     meeting = models.Meeting.query.get(id)
+    
+    # Check if meeting requested exists
+    if not meeting:
+        return jsonify({"message": "Meeting with id " + id + " does not exist."})
+
     return models.meeting_schema.jsonify(meeting)
 
 """
@@ -61,13 +71,15 @@ This is the Recording API
 # Create a Recording
 @app.route('/recording', methods=['POST'])
 def create_recording():
-    url = request.json['url']
+    url = request.json['url'] #catch url already exists
     is_private = request.json['is_private']
     meeting_id = request.json['meeting_id'] #validate meeting id (real meeting?)
+
     new_recording = models.Recording(url, is_private, meeting_id)
 
     db.session.add(new_recording)
     db.session.commit()
+
 
     return models.recording_schema.jsonify(new_recording)
 
@@ -93,6 +105,61 @@ def delete_recording(url):
 
   return models.recording_schema.jsonify(recording)
 
+# Add Viewer to Recording
+@app.route('/recording/add-viewer', methods=['POST'])
+def add_viewer_to_recording():
+    email = request.json['email']
+    url = request.json['url']
+    recording = db.session.query(models.Recording).get(url)
+    viewer = db.session.query(models.Viewer).filter_by(email=email).first()
+
+    if not recording or not viewer:
+        return jsonify({"message": "Email or URL do not belong to a valid viewer or recording."})
+
+    if recording.is_private:
+        return jsonify({"message": "Cannot add a Viewer to a private Recording."})
+
+    recording.viewers.append(viewer)
+    db.session.add(recording)
+    db.session.commit()
+
+    result = models.viewers_schema.dump(recording.viewers)
+    return jsonify(result.data)
+
+# Get Viewers of a Recording
+@app.route('/recording/get-viewers/<path:url>', methods=['GET'])
+def get_viewers_recording(url):
+    recording = models.Recording.query.get(url)
+
+    # Recording not found
+    if not recording:
+        return jsonify({"message": "Recording not found."})
+
+    result = models.viewers_schema.dump(recording.viewers)
+
+    # Recording without Viewers
+    if not result.data:
+        return jsonify({"message": "No viewers associated with this recording."})
+
+    return jsonify(result.data)
+
+# Share Recording
+@app.route('/recording/share/<path:url>', methods=['PUT'])
+def share_recording(url):
+    return None
+
+# Verify if a Viewer has access to a specific Recording
+@app.route('/recording/has-access', methods=['GET'])
+def verify_viewer_access():
+    email = request.json['email']
+    url = request.json['url']
+    password = request.json['password']
+
+    recording = db.session.query(models.Recording).get(url)
+    viewer = db.session.query(models.Viewer).filter_by(email=email).first()
+
+    return None
+
 """
 
 This is the Viewers API
@@ -116,6 +183,7 @@ def get_viewers():
     all_viewers = models.Viewer.query.all()
     result = models.viewers_schema.dump(all_viewers)
     return jsonify(result.data)
+
 
 
 

@@ -49,7 +49,7 @@ class MeetingSchema(ma.Schema):
 
 class RecordingSchema(ma.Schema):
     class Meta:
-        fields = ('url', 'is_private', 'meeting_id', 'viewers')
+        fields = ('url', 'is_private', 'meeting_id')
 
 class ViewerSchema(ma.Schema):
     class Meta:

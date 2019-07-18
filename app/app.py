@@ -126,11 +126,10 @@ def share_recording():
 
 # Verify if a Viewer has access to a specific Recording
 @app.route('/recording/has-access', methods=['GET'])
-def verify_viewer_access():
+def check_access():
     email = request.json['email']
     url = request.json['url']
     password = request.json['password']
-
     recording = models.Recording.query.get(url)
     viewer = models.Viewer.query.filter_by(email=email).first()
 
@@ -140,11 +139,21 @@ def verify_viewer_access():
     if not recording:
         return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
 
-    print(recording)
+
+    # 1 STEP - check if the recording is private 
+    # if yes verify if the viewer is the host of the meeting associated with the recording
+    if recording.is_private:
+        print(recording)
+    else:
+    # 2 STEP - else recording is public
+    # check if the user knows the password to access the record (password from the meeting) 
+        print("TODO")
+
+    
 
     #has_access = models.Meeting.query.filter(and_ (host_email=email, password=password))
 
-    return None
+    return "The end"
 
 
 # Get All Recordings

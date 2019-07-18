@@ -41,12 +41,11 @@ This tutorial utilizes the following software:
     ```
 ## Assumptions:
 
-> Some assumptions were made when creating the data model
+> Some assumptions were made when creating the data model:
 
 * Multiple records of the same meeting are allowed
 * The host is a Viewer
 * The viewers email is unique
-* I could differentiate between public recordings and private recordings or viewers and hosts. However they behaviour is the same.
 
 
 ## Endpoints
@@ -56,3 +55,20 @@ This tutorial utilizes the following software:
 * POST    /product
 * PUT     /product/:id
 * DELETE  /product/:id
+
+## Endpoints Reasoning
+
+* /product
+* /product/:id
+* /product
+* /product/:id
+* /product/:id
+
+## Notes
+
+1. Why Marshmallow
+> json
+
+1. Using Postman to test de API
+
+

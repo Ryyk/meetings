@@ -37,8 +37,17 @@ This tutorial utilizes the following software:
 1. Run the tests:
 
     ```sh
-    (env)$ python  app/app_test.py
+    (env)$ python app/app_test.py
     ```
+## Assumptions:
+
+> Some assumptions were made when creating the data model
+
+* Multiple records of the same meeting are allowed
+* The host is a Viewer
+* The viewers email is unique
+* I could differentiate between public recordings and private recordings or viewers and hosts. However they behaviour is the same.
+
 
 ## Endpoints
 

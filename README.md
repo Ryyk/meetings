@@ -6,12 +6,39 @@
 
 ## Requirements
 
-This tutorial utilizes the following requirements:
+This tutorial utilizes the following software:
 
-1. Python v3.7.0
-1. Flask v1.0.2
-1. Flask-SQLAlchemy v2.3.2
-1. gunicorn v19.9.0
+1. Python v3.7.3
+1. Postman (Design and Test APIs)
+
+## Project Setup
+
+1. Create a new directory to store the project:
+
+    ```sh
+    $ mkdir meetings
+    $ cd meetings
+    ```
+
+1. Create and activate your virtual env and install requirements.txt:
+
+    ```sh
+    $ virtualenv venv
+    $ venv\Scripts\activate
+    $ (env)$ pip install -r requirements.txt
+    ```
+
+1. Run the server:
+
+    ```sh
+    (env)$ python app/app.py
+    ```
+
+1. Run the tests:
+
+    ```sh
+    (env)$ python  app/app_test.py
+    ```
 
 ## Endpoints
 

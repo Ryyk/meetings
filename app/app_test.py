@@ -38,7 +38,7 @@ class MeetingsApiTestCase(unittest.TestCase):
         return self.app.post('/recording/create', json={'url': url, 'is_private': is_private, 'meeting_id': meeting_id})
 
     def delete_recording(self, url):
-        return self.app.post('/recording/delete', json={'url': url})
+        return self.app.delete('/recording/delete', json={'url': url})
 
     def share_recording(self, email, url):
         return self.app.post('/recording/share', json={'url': url, "email": email})

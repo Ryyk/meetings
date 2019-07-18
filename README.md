@@ -50,25 +50,31 @@ This tutorial utilizes the following software:
 
 ## Endpoints
 
-* GET     /product
-* GET     /product/:id
-* POST    /product
-* PUT     /product/:id
-* DELETE  /product/:id
+* POST    /meeting/create
+* GET     /meeting/get
+* GET     /meeting/get/:id
+* POST    /recording/create
+* DELETE  /recording/delete
+* POST    /recording/share
+* GET     /recording/has-access 
+* GET     /recording/get
+* GET     /recording/get/:url
+* POST    /viewer/create
+* GET     /viewer/get
 
 ## Endpoints Reasoning
 
-* /product
-* /product/:id
-* /product
+* /meeting/create
+* /meeting/get
+* /meeting/get/:id
 * /product/:id
 * /product/:id
 
 ## Notes
 
-1. Why Marshmallow
+1. Why Marshmallow:
 > json
 
-1. Using Postman to test de API
+2. Using Postman to test de API:
 
 

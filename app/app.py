@@ -85,7 +85,7 @@ def create_recording():
     return models.recording_schema.jsonify(new_recording)
 
 # Delete Recording
-@app.route('/recording/delete', methods=['POST'])
+@app.route('/recording/delete', methods=['DELETE'])
 def delete_recording():
     url = request.json['url']
     # Check if URL is valid

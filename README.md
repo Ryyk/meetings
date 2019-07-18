@@ -51,7 +51,10 @@ This tutorial utilizes the following software:
 ## Endpoints
 
 * POST    /meeting/create 
-> json{"host_email": email, "password": password}
+> {
+>   "host_email": email, 
+>   "password": password
+>  }
 * GET     /meeting/get
 * GET     /meeting/get/:id
 * POST    /recording/create

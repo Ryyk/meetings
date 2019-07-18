@@ -1,6 +1,6 @@
 # REST API With Flask, SQL Alchemy
 
-[![Build Status](https://travis-ci.org/mjhea0/flaskr-tdd.svg?branch=master)](https://travis-ci.org/mjhea0/flaskr-tdd)
+[![Build Status](https://travis-ci.com/Ryyk/meetings.svg?token=8YLktDDQipLLgFGN1NpP&branch=master!)](https://travis-ci.com/Ryyk/meetings)
 
 > Meetings API using Python Flask, SQL Alchemy and Marshmallow
 

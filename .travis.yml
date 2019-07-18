@@ -7,4 +7,4 @@ install:
   - pip install -r requirements.txt
 
 script:
-  - python app/app_test.py && python app/app.py
+  - python app/app_test.py

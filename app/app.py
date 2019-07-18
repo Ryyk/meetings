@@ -1,3 +1,5 @@
+
+
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -18,13 +20,10 @@ db = SQLAlchemy(app)
 # Init ma
 ma = Marshmallow(app)
 
-
 import models
 
 """
-
 This is the Meeting API
-
 """
 
 # Create a Meeting
@@ -34,14 +33,14 @@ def create_meeting():
     password = request.json['password']
 
     # Verify if the host email is from a valid host
-    viewer = db.session.query(models.Viewer).filter_by(email=host_email).first()
+    viewer = models.Viewer.query.filter_by(
+        email=host_email).first()
     if not viewer:
         return jsonify({"message": "Invalid host email."})
 
     new_meeting = models.Meeting(host_email, password)
     db.session.add(new_meeting)
     db.session.commit()
-
     return models.meeting_schema.jsonify(new_meeting)
 
 # Get All Meetings
@@ -55,32 +54,51 @@ def get_meetings():
 @app.route('/meeting/<id>', methods=['GET'])
 def get_meeting(id):
     meeting = models.Meeting.query.get(id)
-    
-    # Check if meeting requested exists
+    # Check if meeting exists
     if not meeting:
         return jsonify({"message": "Meeting with id " + id + " does not exist."})
-
     return models.meeting_schema.jsonify(meeting)
 
+
 """
-
 This is the Recording API
-
 """
 
 # Create a Recording
 @app.route('/recording', methods=['POST'])
 def create_recording():
-    url = request.json['url'] #catch url already exists
+    url = request.json['url'] 
     is_private = request.json['is_private']
-    meeting_id = request.json['meeting_id'] #validate meeting id (real meeting?)
+    meeting_id = request.json['meeting_id']
+
+    # Check if URL already exists 
+    recording = models.Recording.query.filter_by(url=url).first()
+    if recording:
+        return jsonify({"message": "URL already exists."})
+
+    # Check if meeting id is valid 
+    meeting = models.Meeting.query.filter_by(id=meeting_id).first()
+    if not meeting:
+        return jsonify({"message": "Invalid meeting id."})
 
     new_recording = models.Recording(url, is_private, meeting_id)
-
     db.session.add(new_recording)
     db.session.commit()
-
     return models.recording_schema.jsonify(new_recording)
+
+# Delete Recording
+@app.route('/recording/<path:url>', methods=['DELETE'])
+def delete_recording(url):
+    recording = db.session.query(models.Recording).get(url)
+    db.session.delete(recording)
+    db.session.commit()
+
+    return models.recording_schema.jsonify(recording)
+
+# Share Recording
+@app.route('/recording/share/<path:url>', methods=['PUT'])
+def share_recording(url):
+    return None
 
 # Get All Recordings
 @app.route('/recording', methods=['GET'])
@@ -95,14 +113,6 @@ def get_recording(url):
     recording = models.Recording.query.get(url)
     return models.recording_schema.jsonify(recording)
 
-# Delete Recording
-@app.route('/recording/<path:url>', methods=['DELETE'])
-def delete_recording(url):
-  recording = db.session.query(models.Recording).get(url)
-  db.session.delete(recording)
-  db.session.commit()
-
-  return models.recording_schema.jsonify(recording)
 
 # Add Viewer to Recording
 @app.route('/recording/add-viewer', methods=['POST'])
@@ -142,11 +152,6 @@ def get_viewers_recording(url):
 
     return jsonify(result.data)
 
-# Share Recording
-@app.route('/recording/share/<path:url>', methods=['PUT'])
-def share_recording(url):
-    return None
-
 # Verify if a Viewer has access to a specific Recording
 @app.route('/recording/has-access', methods=['GET'])
 def verify_viewer_access():
@@ -159,6 +164,7 @@ def verify_viewer_access():
 
     return None
 
+
 """
 
 This is the Viewers API
@@ -168,7 +174,7 @@ This is the Viewers API
 # Create a Viewer
 @app.route('/viewer', methods=['POST'])
 def create_viewer():
-    email = request.json['email'] #verify if it is a valid email @
+    email = request.json['email']  # verify if it is a valid email @
     new_viewer = models.Viewer(email)
 
     db.session.add(new_viewer)
@@ -182,9 +188,6 @@ def get_viewers():
     all_viewers = models.Viewer.query.all()
     result = models.viewers_schema.dump(all_viewers)
     return jsonify(result.data)
-
-
-
 
 
 # Run Server

@@ -50,7 +50,8 @@ This tutorial utilizes the following software:
 
 ## Endpoints
 
-* POST    /meeting/create
+* POST    /meeting/create 
+> json{"host_email": email, "password": password}
 * GET     /meeting/get
 * GET     /meeting/get/:id
 * POST    /recording/create
@@ -67,8 +68,14 @@ This tutorial utilizes the following software:
 * /meeting/create
 * /meeting/get
 * /meeting/get/:id
-* /product/:id
-* /product/:id
+* /recording/create
+* /recording/delete
+* /recording/share
+* /recording/has-access 
+* /recording/get
+* /recording/get/:url
+* /viewer/create
+* /viewer/get
 
 ## Notes
 

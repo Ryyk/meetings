@@ -4,6 +4,14 @@
 
 > Meetings API using Python Flask, SQL Alchemy and Marshmallow
 
+## Requirements
+
+This tutorial utilizes the following requirements:
+
+1. Python v3.7.0
+1. Flask v1.0.2
+1. Flask-SQLAlchemy v2.3.2
+1. gunicorn v19.9.0
 
 ## Endpoints
 

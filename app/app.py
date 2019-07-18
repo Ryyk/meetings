@@ -24,8 +24,9 @@ import models
 # Create a Meeting
 @app.route('/meeting', methods=['POST'])
 def create_meeting():
+    host_email = request.json['host_email'] #verify if the host email is a valid "host" and valid email @
     password = request.json['password']
-    new_meeting = models.Meeting(password)
+    new_meeting = models.Meeting(host_email, password)
 
     db.session.add(new_meeting)
     db.session.commit()

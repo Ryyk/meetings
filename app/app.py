@@ -1,10 +1,11 @@
 
 
+
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
-
+import re
 
 # Init app
 app = Flask(__name__)
@@ -67,16 +68,16 @@ This is the Recording API
 # Create a Recording
 @app.route('/recording', methods=['POST'])
 def create_recording():
-    url = request.json['url'] 
+    url = request.json['url']
     is_private = request.json['is_private']
     meeting_id = request.json['meeting_id']
 
-    # Check if URL already exists 
+    # Check if URL already exists
     recording = models.Recording.query.filter_by(url=url).first()
     if recording:
         return jsonify({"message": "URL already exists."})
 
-    # Check if meeting id is valid 
+    # Check if meeting id is valid
     meeting = models.Meeting.query.filter_by(id=meeting_id).first()
     if not meeting:
         return jsonify({"message": "Invalid meeting id."})
@@ -89,8 +90,8 @@ def create_recording():
 # Delete Recording
 @app.route('/recording/delete', methods=['POST'])
 def delete_recording():
-    url = request.json['url'] 
-    # Check if URL is valid 
+    url = request.json['url']
+    # Check if URL is valid
     recording = db.session.query(models.Recording).get(url)
     if not recording:
         return jsonify({"message": "URL does not exist."})
@@ -102,24 +103,29 @@ def delete_recording():
 # Share Recording
 @app.route('/recording/share', methods=['POST'])
 def share_recording():
-    email = request.json['email'] 
-    url = request.json['url'] 
-    recording = models.Recording.query.get(url)
-    viewer = models.Viewer.query.filter_by(email=email).first()
+    email = request.json['email']
+    url = request.json['url']
+    recording = db.session.query(models.Recording).get(url)
+    viewer = db.session.query(models.Viewer).filter_by(email=email).first()
 
+    # Invalid Email
     if not viewer:
         return jsonify({"message": "The Email " + email + " does not belong to a valid viewer."})
 
+    # Invalid URL
     if not recording:
         return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
 
+    # Share meeting with same viewer twice
     if viewer in recording.viewers:
         return jsonify({"message": "Cannot share meeting:" + url + " with the viewer " + email + " twice."})
 
+    # Add viewer private recording
     if recording.is_private:
         return jsonify({"message": "Cannot add viewers to a private Recording."})
 
     recording.viewers.append(viewer)
+    db.session.add(recording)
     db.session.commit()
 
     return jsonify({"message": "Viewer " + email + " added to recording " + url + "!"})
@@ -129,31 +135,39 @@ def share_recording():
 def check_access():
     email = request.json['email']
     url = request.json['url']
-    password = request.json['password']
     recording = models.Recording.query.get(url)
     viewer = models.Viewer.query.filter_by(email=email).first()
+    # If the recording is private the owner can access it without password
+    try:
+        password = request.json['password']
+    except KeyError:
+        if recording.is_private:
+            pass
 
+    # Invalid Email
     if not viewer:
         return jsonify({"message": "The Email " + email + " does not belong to a valid viewer."})
 
+    # Invalid URL
     if not recording:
         return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
 
+    meeting = models.Meeting.query.get(recording.meeting_id)
+    meeting_host_email = meeting.host_email
+    meeting_password = meeting.password
 
-    # 1 STEP - check if the recording is private 
-    # if yes verify if the viewer is the host of the meeting associated with the recording
+    # Only the host can access a private recording
     if recording.is_private:
-        print(recording)
+        if email == meeting_host_email:
+            return jsonify({"message": "SUCCESS: Viewer " + email + " has access to the Recording."})
+        return jsonify({"message": "FAIL: Viewer " + email + " does not have access to the Recording."})
+
+    # The viewer needs to know the password to access a public recording 
+    # and needs to be in the list of viewers as well
     else:
-    # 2 STEP - else recording is public
-    # check if the user knows the password to access the record (password from the meeting) 
-        print("TODO")
-
-    
-
-    #has_access = models.Meeting.query.filter(and_ (host_email=email, password=password))
-
-    return "The end"
+        if password == meeting_password and viewer in recording.viewers:
+            return jsonify({"message": "SUCCESS: Viewer " + email + " has access to the Recording."})
+        return jsonify({"message": "FAIL: Viewer " + email + " does not have access to the Recording."})
 
 
 # Get All Recordings
@@ -172,7 +186,7 @@ def get_recording(url):
 # Get viewers of a recording
 @app.route('/recording/get-shared', methods=['GET'])
 def get_viewers_recording():
-    url = request.json['url'] 
+    url = request.json['url']
     recording = models.Recording.query.get(url)
 
     # Recording not found
@@ -188,20 +202,27 @@ def get_viewers_recording():
     return jsonify(result.data)
 
 
-
-
 """
-
 This is the Viewers API
-
 """
 
 # Create a Viewer
 @app.route('/viewer', methods=['POST'])
 def create_viewer():
-    email = request.json['email']  # verify if it is a valid email @
-    new_viewer = models.Viewer(email)
+    EMAIL_REGEX = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
+    email = request.json['email'] 
 
+    # Invalid Email
+    if not EMAIL_REGEX.match(email):
+        return jsonify({"message": "Invalid email."})
+
+    # Email exists
+    email_exists = models.Viewer.query.filter_by(
+        email=email).first()
+    if email_exists:
+        return jsonify({"message": "Email already in use."})
+
+    new_viewer = models.Viewer(email)
     db.session.add(new_viewer)
     db.session.commit()
 

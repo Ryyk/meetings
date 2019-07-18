@@ -21,10 +21,16 @@ ma = Marshmallow(app)
 
 import models
 
+"""
+
+This is the Meeting API
+
+"""
+
 # Create a Meeting
 @app.route('/meeting', methods=['POST'])
 def create_meeting():
-    host_email = request.json['host_email'] #verify if the host email is a valid "host" and valid email @
+    host_email = request.json['host_email'] #verify if the host email is a valid "host" if not exception
     password = request.json['password']
     new_meeting = models.Meeting(host_email, password)
 
@@ -46,13 +52,18 @@ def get_meeting(id):
     meeting = models.Meeting.query.get(id)
     return models.meeting_schema.jsonify(meeting)
 
+"""
+
+This is the Recording API
+
+"""
 
 # Create a Recording
 @app.route('/recording', methods=['POST'])
 def create_recording():
     url = request.json['url']
     is_private = request.json['is_private']
-    meeting_id = request.json['meeting_id']
+    meeting_id = request.json['meeting_id'] #validate meeting id (real meeting?)
     new_recording = models.Recording(url, is_private, meeting_id)
 
     db.session.add(new_recording)
@@ -81,6 +92,32 @@ def delete_recording(url):
   db.session.commit()
 
   return models.recording_schema.jsonify(recording)
+
+"""
+
+This is the Viewers API
+
+"""
+
+# Create a Viewer
+@app.route('/viewer', methods=['POST'])
+def create_viewer():
+    email = request.json['email'] #verify if it is a valid email @
+    new_viewer = models.Viewer(email)
+
+    db.session.add(new_viewer)
+    db.session.commit()
+
+    return models.viewer_schema.jsonify(new_viewer)
+
+# Get All Viewers
+@app.route('/viewer', methods=['GET'])
+def get_viewers():
+    all_viewers = models.Viewer.query.all()
+    result = models.viewers_schema.dump(all_viewers)
+    return jsonify(result.data)
+
+
 
 
 # Run Server

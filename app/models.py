@@ -30,11 +30,10 @@ class Recording(db.Model):
 # Viewer Class/Model
 class Viewer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
 
-    def __init__(self, email, is_host):
+    def __init__(self, email):
         self.email = email
-        self.is_host = is_host
 
 
 # Helper table
@@ -54,7 +53,7 @@ class RecordingSchema(ma.Schema):
 
 class ViewerSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'email', 'is_host')
+        fields = ('id', 'email')
 
 
 # Init schema

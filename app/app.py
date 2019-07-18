@@ -87,12 +87,15 @@ def create_recording():
     return models.recording_schema.jsonify(new_recording)
 
 # Delete Recording
-@app.route('/recording/<path:url>', methods=['DELETE'])
+@app.route('/recording/delete/<path:url>', methods=['GET'])
 def delete_recording(url):
+    # Check if URL is valid 
     recording = db.session.query(models.Recording).get(url)
+    if not recording:
+        return jsonify({"message": "URL does not exist."})
+
     db.session.delete(recording)
     db.session.commit()
-
     return models.recording_schema.jsonify(recording)
 
 # Share Recording

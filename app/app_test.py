@@ -24,17 +24,21 @@ class MeetingsApiTestCase(unittest.TestCase):
         db.drop_all()
 
     # helper functions
+
+    """Viewer helper function"""
     def create_viewer(self, email):
-        """Viewer helper function"""
         return self.app.post('/viewer', json={'email': email})
 
+    """Meeting helper function"""
     def create_meeting(self, host_email, password):
-        """Meeting helper function"""
         return self.app.post('/meeting', json={'host_email': host_email, 'password': password})
 
+    """Recording helper function"""
     def create_recording(self, url, is_private, meeting_id):
-        """Recording helper function"""
         return self.app.post('/recording', json={'url': url, 'is_private': is_private, 'meeting_id': meeting_id})
+
+    def delete_recording(self, url):
+        return self.app.get('/recording/delete/' + url)
 
     # assert functions
     def test_empty_meeting(self):
@@ -74,6 +78,20 @@ class MeetingsApiTestCase(unittest.TestCase):
         self.assertEqual(url, recording.url)
         self.assertEqual(is_private, recording.is_private)
         self.assertEqual(meeting_id, recording.meeting_id)
+
+    def test_delete_recording(self):
+        """Ensure that a new recording is created"""
+        url = "https://s3.amazonaws.com/meetings/recording1/"
+        is_private = False
+        meeting_id = 1
+        email = "test@email.com"
+        password = "pass"
+        self.create_viewer(email)
+        self.create_meeting(email, password)
+        self.create_recording(url, is_private, meeting_id)
+        self.delete_recording(url)
+        recordings = models.Recording.query.all()
+        self.assertEqual([], recordings)
 
     def test_url_already_exists(self):
         """Ensure the url from a recording is unique"""

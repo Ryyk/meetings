@@ -80,7 +80,6 @@ def create_recording():
     db.session.add(new_recording)
     db.session.commit()
 
-
     return models.recording_schema.jsonify(new_recording)
 
 # Get All Recordings

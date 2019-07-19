@@ -28,13 +28,13 @@ This tutorial utilizes the following software:
     $ (env)$ pip install -r requirements.txt
     ```
 
-1. Run the server:
+2. Run server (http://localhost:5000):
 
     ```sh
     (env)$ python app/app.py
     ```
 
-1. Run the tests:
+3. Run tests:
 
     ```sh
     (env)$ python app/app_test.py
@@ -72,9 +72,14 @@ This tutorial utilizes the following software:
 
 ## Notes
 
-1. Why Marshmallow:
-> json
+1. **Why Marshmallow**:
+marshmallow is an ORM/ODM/framework-agnostic library for converting complex datatypes, such as objects, to and from native Python datatypes. Marshmallow schemas can be used to:
+   - Validate input data.
+   - Deserialize input data to app-level objects.
+   - Serialize app-level objects to primitive Python types. The serialized objects can then be rendered to standard formats such as JSON for use in an HTTP API.
 
-2. Using Postman to test de API:
+1. **Using Postman to test the APIs**:
+Postman is a great tool when trying to test RESTful APIs. It offers a sleek user interface with which to make HTML requests, without the hassle of writing a bunch of code just to test an API's functionality.
+
 
 

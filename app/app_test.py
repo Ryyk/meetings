@@ -1,7 +1,5 @@
 import unittest
 import os
-import json
-
 from app import app, db
 import models
 
@@ -26,32 +24,44 @@ class MeetingsApiTestCase(unittest.TestCase):
     # helper functions
 
     """Viewer helper function"""
+
     def create_viewer(self, email):
         return self.app.post('/viewer/create', json={'email': email})
 
     """Meeting helper function"""
+
     def create_meeting(self, host_email, password):
-        return self.app.post('/meeting/create', json={'host_email': host_email, 'password': password})
+        return self.app.post('/meeting/create',
+                             json={'host_email': host_email,
+                                   'password': password})
 
     """Recording helper function"""
+
     def create_recording(self, url, is_private, meeting_id):
-        return self.app.post('/recording/create', json={'url': url, 'is_private': is_private, 'meeting_id': meeting_id})
+        return self.app.post('/recording/create',
+                             json={'url': url,
+                                   'is_private': is_private,
+                                   'meeting_id': meeting_id})
 
     def delete_recording(self, url):
-        return self.app.delete('/recording/delete', json={'url': url})
+        return self.app.delete('/recording/delete',
+                               json={'url': url})
 
     def share_recording(self, email, url):
-        return self.app.post('/recording/share', json={'url': url, "email": email})
+        return self.app.post('/recording/share',
+                             json={'url': url, "email": email})
 
     def has_access_recording(self, email, url, password):
-        return self.app.get('/recording/has-access', json={'email': email, "url": url, "password": password})
+        return self.app.get('/recording/has-access',
+                            json={'email': email,
+                                  "url": url,
+                                  "password": password})
 
     # assert functions
     def test_empty_meeting(self):
         """Ensure meeting list is empty"""
         all_meetings = models.Meeting.query.all()
         self.assertEqual([], all_meetings)
-
 
     # "/meeting/create" tests
 
@@ -233,7 +243,8 @@ class MeetingsApiTestCase(unittest.TestCase):
         self.share_recording(email, url)
         rv = self.share_recording(email, url)
         json_data = rv.get_json()
-        message = "Cannot share meeting:" + url + " with the viewer " + email + " twice."
+        message = "Cannot share meeting:" + url + \
+            " with the viewer " + email + " twice."
         self.assertEqual(message, json_data['message'])
 
     def test_add_viewer_private_recording_share(self):
@@ -302,7 +313,8 @@ class MeetingsApiTestCase(unittest.TestCase):
         self.create_recording(url, is_private, meeting_id)
         rv = self.has_access_recording(email_alt, url, password)
         json_data = rv.get_json()
-        message = "FAIL: Viewer " + email_alt + " does not have access to the Recording."
+        message = "FAIL: Viewer " + email_alt + \
+            " does not have access to the Recording."
         self.assertEqual(message, json_data['message'])
 
     def test_viewer_access_public_recording(self):

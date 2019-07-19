@@ -54,7 +54,8 @@ def get_meeting(id):
     meeting = models.Meeting.query.get(id)
     # Check if meeting exists
     if not meeting:
-        return jsonify({"message": "Meeting with id " + id + " does not exist."})
+        return jsonify({"message": "Meeting with id " + id +
+                        " does not exist."})
     return models.meeting_schema.jsonify(meeting)
 
 
@@ -107,25 +108,30 @@ def share_recording():
 
     # Invalid Email
     if not viewer:
-        return jsonify({"message": "The Email " + email + " does not belong to a valid viewer."})
+        return jsonify({"message": "The Email " + email +
+                        " does not belong to a valid viewer."})
 
     # Invalid URL
     if not recording:
-        return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
+        return jsonify({"message": "The URL " + url +
+                        " does not belong to a valid Recording."})
 
     # Share meeting with same viewer twice
     if viewer in recording.viewers:
-        return jsonify({"message": "Cannot share meeting:" + url + " with the viewer " + email + " twice."})
+        return jsonify({"message": "Cannot share meeting:" + url +
+                        " with the viewer " + email + " twice."})
 
     # Add viewer private recording
     if recording.is_private:
-        return jsonify({"message": "Cannot add viewers to a private Recording."})
+        return jsonify({"message": "Cannot add viewers to "
+                        "a private Recording."})
 
     recording.viewers.append(viewer)
     db.session.add(recording)
     db.session.commit()
 
-    return jsonify({"message": "Viewer " + email + " added to recording " + url + "!"})
+    return jsonify({"message": "Viewer " + email +
+                    " added to recording " + url + "!"})
 
 # Verify if a Viewer has access to a specific Recording
 @app.route('/recording/has-access', methods=['GET'])
@@ -143,11 +149,13 @@ def check_access():
 
     # Invalid Email
     if not viewer:
-        return jsonify({"message": "The Email " + email + " does not belong to a valid viewer."})
+        return jsonify({"message": "The Email " + email +
+                        " does not belong to a valid viewer."})
 
     # Invalid URL
     if not recording:
-        return jsonify({"message": "The URL " + url + " does not belong to a valid Recording."})
+        return jsonify({"message": "The URL " + url +
+                        " does not belong to a valid Recording."})
 
     meeting = models.Meeting.query.get(recording.meeting_id)
     meeting_host_email = meeting.host_email
@@ -156,15 +164,19 @@ def check_access():
     # Only the host can access a private recording
     if recording.is_private:
         if email == meeting_host_email:
-            return jsonify({"message": "SUCCESS: Viewer " + email + " has access to the Recording."})
-        return jsonify({"message": "FAIL: Viewer " + email + " does not have access to the Recording."})
+            return jsonify({"message": "SUCCESS: Viewer " + email +
+                            " has access to the Recording."})
+        return jsonify({"message": "FAIL: Viewer " + email +
+                        " does not have access to the Recording."})
 
-    # The viewer needs to know the password to access a public recording 
+    # The viewer needs to know the password to access a public recording
     # and needs to be in the list of viewers as well
     else:
         if password == meeting_password and viewer in recording.viewers:
-            return jsonify({"message": "SUCCESS: Viewer " + email + " has access to the Recording."})
-        return jsonify({"message": "FAIL: Viewer " + email + " does not have access to the Recording."})
+            return jsonify({"message": "SUCCESS: Viewer " + email +
+                            " has access to the Recording."})
+        return jsonify({"message": "FAIL: Viewer " + email +
+                        " does not have access to the Recording."})
 
 
 # Get All Recordings
@@ -188,8 +200,9 @@ This is the Viewers API
 # Create a Viewer
 @app.route('/viewer/create', methods=['POST'])
 def create_viewer():
-    EMAIL_REGEX = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
-    email = request.json['email'] 
+    EMAIL_REGEX = re.compile(
+        r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
+    email = request.json['email']
 
     # Invalid Email
     if not EMAIL_REGEX.match(email):

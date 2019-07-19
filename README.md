@@ -50,35 +50,25 @@ This tutorial utilizes the following software:
 
 ## Endpoints
 
-* POST    /meeting/create 
-> {
->   "host_email": email, 
->   "password": password
->  }
-* GET     /meeting/get
-* GET     /meeting/get/:id
-* POST    /recording/create
-* DELETE  /recording/delete
-* POST    /recording/share
-* GET     /recording/has-access 
-* GET     /recording/get
-* GET     /recording/get/:url
-* POST    /viewer/create
-* GET     /viewer/get
+- **POST**    /meeting/create - **Create a Meeting**
+> { "host_email": string,  "password": string }
+- **GET**     /meeting/get - **Get All Meetings**
+- **GET**     /meeting/get/:id - **Get Single Meeting**
+- **POST**    /recording/create - **Create a Recording**
+> { "url": string,  "is_private": bool, "meeting_id": int }
+- **DELETE**  /recording/delete - **Delete Recording**
+> { "url": string }
+- **POST**    /recording/share - **Share Recording**
+> { "url": string,  "email": string }
+- **GET**     /recording/has-access - **Verify if a Viewer has access to a specific Recording**
+> { "url": string,  "email": string }
+- **GET**     /recording/get - **Get All Recordings**
+- **GET**     /recording/get/:url - **Get Single Recordings**
+- **POST**    /viewer/create - **Create a Viewer**
+> { "email": string }
+- **GET**     /viewer/get - **Get All Viewers**
 
-## Endpoints Reasoning
-
-* /meeting/create
-* /meeting/get
-* /meeting/get/:id
-* /recording/create
-* /recording/delete
-* /recording/share
-* /recording/has-access 
-* /recording/get
-* /recording/get/:url
-* /viewer/create
-* /viewer/get
+> **NOTE**: Some requests require a json with additional information. 
 
 ## Notes
 

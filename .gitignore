@@ -1,8 +1,6 @@
 # Don't track content of these folders
 venv/
 __pycache__/
-create_db.py
-delete_db.py
 meetings.db
 test.db
 

@@ -6,10 +6,10 @@
 
 ## Requirements
 
-This tutorial utilizes the following software:
+This project uses the following software:
 
 1. Python v3.7.3
-1. Postman (Design and Test APIs)
+1. Postman(Design and Test APIs)
 
 ## Project Setup
 
